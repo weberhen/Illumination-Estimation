@@ -7,6 +7,7 @@ from scipy import interpolate
 import vtk
 from vtk.util import numpy_support
 import imageio
+import re
 imageio.plugins.freeimage.download()
 
 
@@ -344,3 +345,5 @@ def print_model_parm_nums(model):
     # model = models.alexnet()
     total = sum([param.nelement() for param in model.parameters()])
     print('  + Number of params: %.2fM' % (total / 1e6))
+
+

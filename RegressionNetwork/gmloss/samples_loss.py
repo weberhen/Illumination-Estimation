@@ -67,9 +67,9 @@ class SamplesLoss(Module):
         return - ε * (wlog.view(B, 1, -1) - C / ε).logsumexp(2).view(B, -1)
 
     def sinkhorn_tensorized(self, α, x, β, y, p=2, blur=.05, reach=None, diameter=None, scaling=.5, geometry=None):
-        B, M, _ = y.shape
+        B = y.shape
 
-        self.distance = distance(batchsize=B, geometry=geometry)
+        self.distance = distance(batchsize=B[0], geometry=geometry)
 
         cost = (lambda m, n: self.distance.geometric_distance(m, n) / 2)
         # cost = (lambda m, n: squared_distances(m, n) / 2)

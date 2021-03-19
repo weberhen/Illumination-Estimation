@@ -13,9 +13,9 @@ import util
 handle = util.PanoramaHandler()
 tone = util.TonemapHDR()
 
-bs_dir = '/home/fangneng.zfn/datasets/LavalIndoor/'
-exr_dir = bs_dir + 'marc/warpedHDROutputs/'
-sv_dir = bs_dir + 'marc/warpedim/'
+bs_dir = '/root/datasets_ssd/LavalIndoor/'
+exr_dir = bs_dir + 'warpedHDROutputs/'
+sv_dir = bs_dir + 'warpedim/'
 nms = os.listdir(exr_dir)
 # nms = nms[:100]
 
@@ -25,7 +25,7 @@ for nm in nms:
         exr_path = exr_dir + nm
         exr = handle.read_exr(exr_path)
         im = tone(exr, True)
-
+        print(sv_dir)
         im = Image.fromarray((im*255.0).astype('uint8'))
         sv_path = sv_dir + nm.replace('exr', 'jpg')
         im.save(sv_path)

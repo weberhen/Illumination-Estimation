@@ -18,19 +18,19 @@ imageio.plugins.freeimage.download()
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 h = PanoramaHandler()
-batch_size = 64
+batch_size = 1
 
 save_dir = "./checkpoints"
-train_dir = '/home/fangneng.zfn/datasets/LavalIndoor/train/'
+train_dir = '/root/datasets_raid/datasets/LavalIndoor/'
 hdr_train_dataset = data.ParameterDataset(train_dir)
 dataloader = DataLoader(hdr_train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 Model = DenseNet.DenseNet().to(device)
-Model = nn.DataParallel(Model, device_ids=[0, 1])# multi-GPU
+Model = nn.DataParallel(Model, device_ids=[0])# multi-GPU
 
 
-load_weight = True
+load_weight = False
 if load_weight:
     Model.load_state_dict(torch.load("./checkpoints/latest_net.pth"))
     print('load trained model')
@@ -75,7 +75,7 @@ for epoch in range(0, 10000):
         rgb_ratio_pred, rgb_ratio_gt = pred['rgb_ratio'], para['rgb_ratio'].to(device)
         ambient_pred, ambient_gt = pred['ambient'], para['ambient'].to(device)
         depth_pred, depth_gt = pred['depth'], para['depth'].to(device)
-
+        print('dist_gt.shape: ',dist_gt.shape)
 
         dist_pred = dist_pred.view(-1, ln, 1)
         dist_gt = dist_gt.view(-1, ln, 1)

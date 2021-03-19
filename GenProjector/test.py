@@ -22,13 +22,14 @@ model = Pix2PixModel(opt)
 model.eval()
 
 for i, data_i in enumerate(dataloader):
+    print(i)
     if i * opt.batchSize >= 1000:
         break
     if i * opt.batchSize >= 0:
         generated = model(data_i, mode='inference')
         nm = data_i['name']
         for b in range(generated.shape[0]):
-            # print('process image... %s' % nm[b])
+            print('process image... %s' % nm[b])
 
             images = OrderedDict([
                                   ('input', data_i['input'][b]),

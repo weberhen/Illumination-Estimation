@@ -3,4 +3,4 @@ python3 test.py \
 	--checkpoints_dir './checkpoints' \
 	--which_epoch 100 \
 	--dataset_mode lavalindoor \
-	--dataroot /home/fangneng.zfn/datasets/LavalIndoor/test/
+	--dataroot /root/datasets_raid/datasets/LavalIndoor/
