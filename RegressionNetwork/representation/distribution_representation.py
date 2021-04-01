@@ -1,47 +1,3 @@
-
-# import numpy as np
-
-# def polar_to_cartesian(phi_theta):
-#     x = np.sin(phi_theta[:, 1]) * np.cos(phi_theta[:, 0])
-#     y = np.sin(phi_theta[:, 1]) * np.sin(phi_theta[:, 0])
-#     z = np.cos(phi_theta[:, 1])
-#     return np.stack((x, y, z), axis=1)
-
-def sphere_points(n=128):
-    golden_angle = np.pi * (3 - np.sqrt(5))
-    theta = golden_angle * np.arange(n)
-    z = np.linspace(1 - 1.0 / n, 1.0 / n - 1, n)
-    print(z)
-    radius = np.sqrt(1 - z * z)
-
-    points = np.zeros((n, 3))
-    points[:, 0] = radius * np.cos(theta)
-    points[:, 1] = radius * np.sin(theta)
-    points[:, 2] = z
-
-    # xyz = points
-    # x, y, z = xyz[:, 0], xyz[:, 1], xyz[:, 2]
-    return points
-
-# h=128
-# w=256
-# ln = 128
-# y_ = np.linspace(0, np.pi, num=h)  # + np.pi / h
-# x_ = np.linspace(0, 2 * np.pi, num=w)  # + np.pi * 2 / w
-# X, Y = np.meshgrid(x_, y_)
-# Y = Y.reshape((-1, 1))
-# X = X.reshape((-1, 1))
-# phi_theta = np.stack((X, Y), axis=1)
-# xyz = polar_to_cartesian(phi_theta)
-# xyz = xyz.reshape((h, w, 3))  # 128, 256, 3
-# xyz = np.expand_dims(xyz, axis=2)
-# xyz = np.repeat(xyz, ln, axis=2)
-# anchors = sphere_points(ln)
-
-# dis_mat = np.linalg.norm((xyz - anchors), axis=-1)
-# idx = np.argsort(dis_mat, axis=-1)[:, :, 0]
-
-
 import cv2
 import numpy as np
 from PIL import Image
@@ -51,31 +7,10 @@ import imageio
 import vtk
 from vtk.util import numpy_support
 import torch
-# import detect_util
+import detect_util
 import util
-from util import load_pfm
 
 imageio.plugins.freeimage.download()
-
-
-def world2latlong(x, y, z):
-    """Get the (u, v) coordinates of the point defined by (x, y, z) for
-    a latitude-longitude map."""
-    u = 1 + (1 / np.pi) * np.arctan2(x, -z)
-    v = (1 / np.pi) * np.arccos(y)
-    # because we want [0,1] interval
-    u = u / 2
-    return u, v
-
-    
-def depth_for_anchors_calc(depth):
-    points = sphere_points()
-    depth_for_anchors = []
-    uvs = world2latlong(points[:,0],points[:,1],points[:,2])
-    uvs = np.array(uvs).transpose()
-    for uv in uvs:
-        depth_for_anchors.append(depth[int(uv[1]*128),256-int(uv[0]*256)])
-    return depth_for_anchors
 
 
 def rgb_to_intenisty(rgb):
@@ -152,7 +87,7 @@ class extract_mesh():
         self.idx = np.argsort(dis_mat, axis=-1)[:, :, 0]
         self.ln, _ = self.anchors.shape
 
-    def compute(self, hdr, depth):
+    def compute(self, hdr):
 
         hdr = self.steradian * hdr
         hdr_intensity = 0.3 * hdr[..., 0] + 0.59 * hdr[..., 1] + 0.11 * hdr[..., 2]
@@ -181,18 +116,16 @@ class extract_mesh():
         parametric_lights = {"distribution": distribution,
                              'intensity': intensity,
                              'rgb_ratio': rgb_ratio,
-                             'ambient': ambient,
-                             'depth': depth}
+                             'ambient': ambient}
         return parametric_lights, map
 
 
 # train_dir = '/home/fangneng.zfn/datasets/LavalIndoor/nips/'
-bs_dir = '/root/datasets_raid/datasets/LavalIndoor/'
-hdr_dir = bs_dir + 'hdrOutputs/'
-depth_dir = bs_dir + 'depth/'
+bs_dir = '/home/fangneng.zfn/datasets/LavalIndoor/'
+hdr_dir = bs_dir + 'marc/warpedHDROutputs/'
 sv_dir = bs_dir + 'pkl/'
 # crop_dir = bs_dir + 'tpami cxd'
-nms = os.listdir(depth_dir)
+nms = os.listdir(hdr_dir)
 # nms = nms[:100]
 ln = 128
 
@@ -201,55 +134,49 @@ extractor = extract_mesh(ln=ln)
 i = 0
 # nms = ['AG8A9899-others-40-1.62409-1.07406.exr']
 for nm in nms:
-    if nm.endswith('.pfm'):
-        hdr_path = hdr_dir + nm[:-3]+'exr'
-        if os.path.isfile(hdr_path):
-            depth_path = depth_dir + nm
+    if nm.endswith('.exr'):
+        hdr_path = hdr_dir + nm
 
-            h = util.PanoramaHandler()
-            hdr = h.read_exr(hdr_path)
-            depth = load_pfm(open(depth_path, 'rb'))[0]
-            depth = cv2.resize(depth,(hdr.shape[1], hdr.shape[0]))
-            para, map = extractor.compute(hdr, depth)
-            
-            with open((sv_dir + os.path.basename(hdr_path).replace('exr', 'pickle')), 'wb') as handle:
-                pickle.dump(para, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            i += 1
-            print (i)
-        else:
-            print('not a file: ', hdr_path)
+        h = util.PanoramaHandler()
+        hdr = h.read_exr(hdr_path)
+        para, map = extractor.compute(hdr)
 
-            # dirs = util.sphere_points(ln)
-            # dirs = torch.from_numpy(dirs)
-            # dirs = dirs.view(1, ln*3).cuda().float()
-            #
-            # size = torch.ones((1, ln)).cuda().float() * 0.0025
-            # intensity = torch.from_numpy(np.array(para['intensity'])).float().cuda()
-            # intensity = intensity.view(1, 1, 1).repeat(1, ln, 3).cuda()
-            #
-            # rgb_ratio = torch.from_numpy(np.array(para['rgb_ratio'])).float().cuda()
-            # rgb_ratio = rgb_ratio.view(1, 1, 3).repeat(1, ln, 1).cuda()
-            #
-            # distribution = torch.from_numpy(para['distribution']).cuda().float()
-            # distribution = distribution.view(1, ln, 1).repeat(1, 1, 3)
-            #
-            # light_rec = distribution * intensity * rgb_ratio
-            # light_rec = light_rec.contiguous().view(1, ln*3)
-            #
-            # env = util.convert_to_panorama(dirs, size, light_rec)
-            # env = env.detach().cpu().numpy()[0]
-            # env = util.tonemapping(env) * 255.0
-            # im = np.transpose(env, (1, 2, 0))
-            # im = Image.fromarray(im.astype('uint8'))
-            #
-            # nm_ = nm.split('.')[0]
-            # im.save('./tmp/{}_rec.png'.format(nm_))
-            #
-            # gt = util.tonemapping(hdr) * 255.0
-            # gt = Image.fromarray(gt.astype('uint8'))
-            # gt.save('./tmp/{}_gt.png'.format(nm_))
-            #
-            # light = util.tonemapping(hdr) * 255.0 * map
-            # light = Image.fromarray(light.astype('uint8'))
-            # light.save('./tmp/{}_light.png'.format(nm_))
-            # print (1/0)
+        with open((sv_dir + os.path.basename(hdr_path).replace('exr', 'pickle')), 'wb') as handle:
+            pickle.dump(para, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        i += 1
+        print (i)
+
+        # dirs = util.sphere_points(ln)
+        # dirs = torch.from_numpy(dirs)
+        # dirs = dirs.view(1, ln*3).cuda().float()
+        #
+        # size = torch.ones((1, ln)).cuda().float() * 0.0025
+        # intensity = torch.from_numpy(np.array(para['intensity'])).float().cuda()
+        # intensity = intensity.view(1, 1, 1).repeat(1, ln, 3).cuda()
+        #
+        # rgb_ratio = torch.from_numpy(np.array(para['rgb_ratio'])).float().cuda()
+        # rgb_ratio = rgb_ratio.view(1, 1, 3).repeat(1, ln, 1).cuda()
+        #
+        # distribution = torch.from_numpy(para['distribution']).cuda().float()
+        # distribution = distribution.view(1, ln, 1).repeat(1, 1, 3)
+        #
+        # light_rec = distribution * intensity * rgb_ratio
+        # light_rec = light_rec.contiguous().view(1, ln*3)
+        #
+        # env = util.convert_to_panorama(dirs, size, light_rec)
+        # env = env.detach().cpu().numpy()[0]
+        # env = util.tonemapping(env) * 255.0
+        # im = np.transpose(env, (1, 2, 0))
+        # im = Image.fromarray(im.astype('uint8'))
+        #
+        # nm_ = nm.split('.')[0]
+        # im.save('./tmp/{}_rec.png'.format(nm_))
+        #
+        # gt = util.tonemapping(hdr) * 255.0
+        # gt = Image.fromarray(gt.astype('uint8'))
+        # gt.save('./tmp/{}_gt.png'.format(nm_))
+        #
+        # light = util.tonemapping(hdr) * 255.0 * map
+        # light = Image.fromarray(light.astype('uint8'))
+        # light.save('./tmp/{}_light.png'.format(nm_))
+        # print (1/0)

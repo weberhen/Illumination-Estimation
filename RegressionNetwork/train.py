@@ -21,13 +21,13 @@ h = PanoramaHandler()
 batch_size = 1
 
 save_dir = "./checkpoints"
-train_dir = '/root/datasets_raid/datasets/LavalIndoor/'
+train_dir = '/gel/usr/heweb4/datasets/LavalIndoor/'
 hdr_train_dataset = data.ParameterDataset(train_dir)
 dataloader = DataLoader(hdr_train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 Model = DenseNet.DenseNet().to(device)
-Model = nn.DataParallel(Model, device_ids=[0])# multi-GPU
+# Model = nn.DataParallel(Model, device_ids=[0, 1])# multi-GPU
 
 
 load_weight = False
@@ -75,7 +75,7 @@ for epoch in range(0, 10000):
         rgb_ratio_pred, rgb_ratio_gt = pred['rgb_ratio'], para['rgb_ratio'].to(device)
         ambient_pred, ambient_gt = pred['ambient'], para['ambient'].to(device)
         depth_pred, depth_gt = pred['depth'], para['depth'].to(device)
-        print('dist_gt.shape: ',dist_gt.shape)
+
 
         dist_pred = dist_pred.view(-1, ln, 1)
         dist_gt = dist_gt.view(-1, ln, 1)
@@ -84,6 +84,7 @@ for epoch in range(0, 10000):
         intensity_loss = l2(intensity_pred, intensity_gt) * 0.1
         rgb_loss = l2(rgb_ratio_pred, rgb_ratio_gt) * 100.0
         ambient_loss = l2(ambient_pred, ambient_gt) * 1.0
+        depth_pred = depth_pred.view(-1, ln, 1)
         depth_loss = UGMLoss(depth_pred, depth_gt, depth_gt) * 1.0
 
         loss = dist_emloss + dist_l2loss + intensity_loss + rgb_loss + ambient_loss + depth_loss

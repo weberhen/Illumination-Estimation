@@ -9,7 +9,7 @@ import time
 import vtk
 from vtk.util import numpy_support
 
-# import detect_util
+import detect_util
 import util
 
 imageio.plugins.freeimage.download()
@@ -119,11 +119,11 @@ def extract_light_info(hdr):
     return parametric_lights
 
 # train_dir = '/home/fangneng.zfn/datasets/LavalIndoor/nips/'
-bs_dir = '/root/datasets_ssd/LavalIndoor/'
+bs_dir = '/home/fangneng.zfn/datasets/LavalIndoor/'
 # hdr_dir = bs_dir + 'marc/warpedHDROutputs/'
 
-sv_dir = bs_dir + 'pkl_masked/'
-pkl_dir = bs_dir + 'pkl/'
+sv_dir = bs_dir + 'nips/pkl_masked/'
+pkl_dir = bs_dir + 'nips/pkl_tmp/'
 nms = os.listdir(pkl_dir)
 # nms = nms[6475:]
 

@@ -184,10 +184,10 @@ def load_network(net, label, epoch, opt):
     print ('***********')
     print (save_filename)
 
-    # save_dir = os.path.join(opt.checkpoints_dir, opt.name)
-    # save_path = os.path.join(save_dir, save_filename)
-    # weights = torch.load(save_path)
-    # net.load_state_dict(weights)
+    save_dir = os.path.join(opt.checkpoints_dir, opt.name)
+    save_path = os.path.join(save_dir, save_filename)
+    weights = torch.load(save_path)
+    net.load_state_dict(weights)
     return net
 
 class TonemapHDR(object):
@@ -453,7 +453,6 @@ def save_current_images(visuals, epoch, step):
     # if self.use_html:  # save images to a html file
     for label, image_numpy in visuals.items():
         img_path = './summary/' + 'epoch%.3d_iter%.3d_%s.png' % (epoch, step, label)
-        print(img_path)
         if label == 'input':
             print(label, image_numpy.sum(axis=(0, 1)), np.max(image_numpy))
             tonemapping(image_numpy, img_path, gamma=2.4, percentile=99, max_mapping=0.8)

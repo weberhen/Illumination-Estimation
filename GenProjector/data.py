@@ -47,7 +47,7 @@ class LavalIndoorDataset():
         for nm in nms:
             if nm.endswith('.pickle'):
                 pkl_path = pkl_dir + nm
-                warped_path = pkl_path.replace(dir, 'hdrInputs/')
+                warped_path = pkl_path.replace(dir, 'warped/')
                 # warped_path = pkl_path.replace(dir, 'test/')
                 warped_path = warped_path.replace('pickle', 'exr')
                 # print (warped_path)

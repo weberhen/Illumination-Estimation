@@ -21,13 +21,13 @@ h = PanoramaHandler()
 batch_size = 1
 
 save_dir = "./checkpoints"
-test_dir = '~/datasets_raid/datasets/LavalIndoor/'
+test_dir = '/home/fangneng.zfn/datasets/LavalIndoor/test/'
 hdr_train_dataset = data.ParameterDataset(train_dir)
 dataloader = DataLoader(hdr_train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 Model = DenseNet.DenseNet().to(device)
-load_weight = False
+load_weight = True
 if load_weight:
     Model.load_state_dict(torch.load("./checkpoints/latest_net.pth"))
     print ('load trained model')

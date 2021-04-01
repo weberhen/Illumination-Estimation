@@ -4,7 +4,6 @@ import Imath
 import cv2
 from scipy import interpolate
 import torch
-import re
 
 
 class TonemapHDR(object):
@@ -227,38 +226,6 @@ def convert_to_panorama(dirs, sizes, colors):
                  view(-1, xyz.shape[1], xyz.shape[2]) - 1) /
                 (sizes[:, i]).view(-1, 1, 1))[:, None, :, :])
     return lights
-
-def load_pfm(file):
-  color = None
-  width = None
-  height = None
-  scale = None
-  endian = None
-
-  header = file.readline().decode('utf-8').rstrip()
-  if header == 'PF':
-    color = True    
-  elif header == 'Pf':
-    color = False
-  else:
-    raise Exception('Not a PFM file.')
-
-  dim_match = re.match(r'^(\d+)\s(\d+)\s$', file.readline().decode('utf-8'))
-  if dim_match:
-    width, height = map(int, dim_match.groups())
-  else:
-    raise Exception('Malformed PFM header.')
-
-  scale = float(file.readline().rstrip())
-  if scale < 0: # little-endian
-    endian = '<'
-    scale = -scale
-  else:
-    endian = '>' # big-endian
-
-  data = np.fromfile(file, endian + 'f')
-  shape = (height, width, 3) if color else (height, width)
-  return np.reshape(data, shape), scale
 
 
 if __name__ == '__main__':
