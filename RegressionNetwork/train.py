@@ -18,7 +18,7 @@ imageio.plugins.freeimage.download()
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 h = PanoramaHandler()
-batch_size = 1
+batch_size = 3
 
 save_dir = "./checkpoints"
 train_dir = '/gel/usr/heweb4/datasets/LavalIndoor/'
@@ -85,7 +85,7 @@ for epoch in range(0, 10000):
         rgb_loss = l2(rgb_ratio_pred, rgb_ratio_gt) * 100.0
         ambient_loss = l2(ambient_pred, ambient_gt) * 1.0
         depth_pred = depth_pred.view(-1, ln, 1)
-        depth_loss = UGMLoss(depth_pred, depth_gt, depth_gt) * 1.0
+        depth_loss = UGMLoss(depth_pred, depth_gt.unsqueeze(2), depth_gt).sum() * 1.0
 
         loss = dist_emloss + dist_l2loss + intensity_loss + rgb_loss + ambient_loss + depth_loss
 

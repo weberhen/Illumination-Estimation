@@ -65,11 +65,13 @@ def geometric_points(n=128, anchor_depth=None):
     theta = golden_angle * np.arange(n)
     z = np.linspace(1 - 1.0 / n, 1.0 / n - 1, n)
     radius = anchor_depth.cpu().numpy()
+    B = radius.shape[0]
 
-    points = np.zeros((n, 3))
-    points[:, 0] = radius * np.cos(theta)
-    points[:, 1] = radius * np.sin(theta)
-    points[:, 2] = z
+    points = np.zeros((B, n, 3))
+    
+    points[:, :, 0] = radius*np.repeat(np.cos(theta),B).reshape(B,-1)
+    points[:, :, 1] = radius*np.repeat(np.sin(theta),B).reshape(B,-1)
+    points[:, :, 2] = z
     return points
 
 
@@ -83,13 +85,14 @@ class distance():
         M = torch.ones((self.N, self.N))
         for i in range(self.N):
             for j in range(self.N):
-                norms = torch.norm((anchors[i] - anchors[j]))
+                norms = torch.norm((anchors[:,i] - anchors[:,j]))
                 M[i, j] = norms
         M[M < 0] = 0
         M = M.unsqueeze(0)
 
         anchors = anchors.unsqueeze(0)
-        self.anchors = anchors.repeat(batchsize, 1, 1).cuda()
+        # self.anchors = anchors.repeat(batchsize, 1, 1).cuda()
+        self.anchors = anchors.cuda()
         self.M = M.repeat(batchsize, 1, 1).cuda()
 
     def geometric_distance(self, x, y):
